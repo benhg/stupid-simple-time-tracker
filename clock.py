@@ -10,7 +10,6 @@ from dateutil.relativedelta import relativedelta
 
 PUNCH_FILE = "/Users/ben/clock_log.json"
 TIME_FORMAT = "%m/%d/%Y, %H:%M:%S"
-
 """
 Schema:
 [
@@ -26,9 +25,9 @@ Schema:
 
 """
 
+
 def create_new_entry():
-    entry = {"clock_in": time.time(),
-             "clock_out": -1}
+    entry = {"clock_in": time.time(), "clock_out": -1}
     return entry
 
 
@@ -46,7 +45,7 @@ def record_action(args):
         if current_log[-1]["clock_out"] != -1:
             print("ERROR: Already clocked out")
             sys.exit(-1)
-        current_log[-1]["clock_out"] = time.time() 
+        current_log[-1]["clock_out"] = time.time()
     else:
         print("ERROR: Unexpected command")
         sys.exit(-1)
@@ -54,10 +53,16 @@ def record_action(args):
     json.dump(current_log, open(PUNCH_FILE, "w"))
     return
 
+
 def readable_delta(time_in, time_out):
     attrs = ['years', 'months', 'days', 'hours', 'minutes', 'seconds']
     delta = relativedelta(time_out, time_in)
-    return ['%d %s' % (getattr(delta, attr), attr if getattr(delta, attr) > 1 else attr[:-1]) for attr in attrs if getattr(delta, attr)]
+    return [
+        '%d %s' %
+        (getattr(delta, attr), attr if getattr(delta, attr) > 1 else attr[:-1])
+        for attr in attrs if getattr(delta, attr)
+    ]
+
 
 def view_history(view_opts):
     data = json.load(open(PUNCH_FILE))
@@ -71,7 +76,10 @@ def view_history(view_opts):
         for d in data:
             time_in = datetime.datetime.fromtimestamp(d["clock_in"])
             time_out = datetime.datetime.fromtimestamp(d["clock_out"])
-            entry = {"clock_in": time_in.strftime(TIME_FORMAT), "clock_out": time_out.strftime(TIME_FORMAT)}
+            entry = {
+                "clock_in": time_in.strftime(TIME_FORMAT),
+                "clock_out": time_out.strftime(TIME_FORMAT)
+            }
             data_2.append(entry)
         print(json.dumps(data_2, indent=2))
         print("========END HUMAN HISTORY:========")
@@ -81,7 +89,11 @@ def view_history(view_opts):
         for d in data:
             time_in = datetime.datetime.fromtimestamp(d["clock_in"])
             time_out = datetime.datetime.fromtimestamp(d["clock_out"])
-            entry = {"clock_in": time_in.strftime(TIME_FORMAT), "clock_out": time_out.strftime(TIME_FORMAT), "total_time": " ".join(readable_delta(time_in, time_out)) }
+            entry = {
+                "clock_in": time_in.strftime(TIME_FORMAT),
+                "clock_out": time_out.strftime(TIME_FORMAT),
+                "total_time": " ".join(readable_delta(time_in, time_out))
+            }
             data_2.append(entry)
         print(json.dumps(data_2, indent=2))
         print("========END PARSED HISTORY:========")
@@ -91,18 +103,37 @@ def view_history(view_opts):
         print("Show the time broken down per day")
     if "summary_week" in view_opts:
         print("Show the time broken down per week")
-    
 
 
 if __name__ == '__main__':
 
-
     parser = argparse.ArgumentParser()
-    parser.add_argument("--clock-in", "-i", help="clock in", action="store_true", default=False)
-    parser.add_argument("--clock-out", "-o", help="clock out", action="store_true", default=False)
-    parser.add_argument("--reset", "-r", help="erase history", action="store_true", default=False)
-    parser.add_argument("--view", "-v", required=False, help="View history", type=str, nargs="+", default=[], choices=["raw", "human", "parsed", "total_time", 
-        "summary", "summary_week"])
+    parser.add_argument("--clock-in",
+                        "-i",
+                        help="clock in",
+                        action="store_true",
+                        default=False)
+    parser.add_argument("--clock-out",
+                        "-o",
+                        help="clock out",
+                        action="store_true",
+                        default=False)
+    parser.add_argument("--reset",
+                        "-r",
+                        help="erase history",
+                        action="store_true",
+                        default=False)
+    parser.add_argument("--view",
+                        "-v",
+                        required=False,
+                        help="View history",
+                        type=str,
+                        nargs="+",
+                        default=[],
+                        choices=[
+                            "raw", "human", "parsed", "total_time", "summary",
+                            "summary_week"
+                        ])
     args = parser.parse_args()
 
     if not os.path.exists(PUNCH_FILE) or args.reset:
