@@ -50,8 +50,9 @@ def record_action(args):
     else:
         print("ERROR: Unexpected command")
         sys.exit(-1)
+
     if (args.notes):    
-        current_log["notes"] = args.notes
+        current_log[-1]["notes"] = args.notes
 
     json.dump(current_log, open(PUNCH_FILE, "w"))
     return
@@ -81,7 +82,8 @@ def view_history(view_opts):
             time_out = datetime.datetime.fromtimestamp(d["clock_out"])
             entry = {
                 "clock_in": time_in.strftime(TIME_FORMAT),
-                "clock_out": time_out.strftime(TIME_FORMAT)
+                "clock_out": time_out.strftime(TIME_FORMAT),
+                "notes": d.get("notes", "")
             }
             data_2.append(entry)
         print(json.dumps(data_2, indent=2))
@@ -95,7 +97,8 @@ def view_history(view_opts):
             entry = {
                 "clock_in": time_in.strftime(TIME_FORMAT),
                 "clock_out": time_out.strftime(TIME_FORMAT),
-                "total_time": " ".join(readable_delta(time_in, time_out))
+                "total_time": " ".join(readable_delta(time_in, time_out)),
+                "notes": d.get("notes", "")
             }
             data_2.append(entry)
         print(json.dumps(data_2, indent=2))
@@ -141,7 +144,7 @@ if __name__ == '__main__':
                         "-n",
                         required=False,
                         help="Add notes to a punch in or out",
-                        type=str,,
+                        type=str,
                         default="")
     args = parser.parse_args()
 
