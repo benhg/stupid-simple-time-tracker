@@ -5,64 +5,104 @@ import json
 import sys
 import datetime
 import time
+import os
 
 PUNCH_FILE = "/Users/ben/clock_log.json"
+TIME_FORMAT = "%m/%d/%Y, %H:%M:%S"
 
 """
 Schema:
 [
   {
-	"clock_in" : TIMESTAMP,
-	"clock_out": TIMESTAMP
+    "clock_in" : TIMESTAMP,
+    "clock_out": TIMESTAMP
   },
   {
-	"clock_in" : TIMESTAMP,
-	"clock_out": TIMESTAMP
+    "clock_in" : TIMESTAMP,
+    "clock_out": TIMESTAMP
   },
 ]
 
 """
 
 def create_new_entry():
-	entry = {"clock_in": time.time(),
-	         "clock_out": -1}
-	return entry
+    entry = {"clock_in": time.time(),
+             "clock_out": -1}
+    return entry
 
 
-def record_action(args: Namespace):
-	current_log = json.load(open(PUNCH_FILE))
-	if args.clock_in:
-		# Create new entry with -1 as clock out time
-		new_log = create_new_entry()
-		current_log.append(new_log)
-	else if args.clock_out:
-		current_log = sorted(current_log, key=lambda x: x.get("clock_in", -1))
-		current_log[-1]["clock_out"] = time.time()
-	else:
-		print("ERROR: Unexpected command")
-		sys.exit(-1)
+def record_action(args):
+    current_log = json.load(open(PUNCH_FILE))
+    current_log = sorted(current_log, key=lambda x: x.get("clock_in", -1))
+    if args.clock_in:
+        if current_log[-1]["clock_out"] == -1:
+            print("ERROR: Currently clocked in.")
+            sys.exit(-1)
+        # Create new entry with -1 as clock out time
+        new_log = create_new_entry()
+        current_log.append(new_log)
+    elif args.clock_out:
+        if current_log[-1]["clock_out"] != -1:
+            print("ERROR: Already clocked out")
+            sys.exit(-1)
+        current_log[-1]["clock_out"] = time.time() 
+    else:
+        print("ERROR: Unexpected command")
+        sys.exit(-1)
 
-	json.dump(open(PUNCH_FILE, "w"))
-	return
+    json.dump(current_log, open(PUNCH_FILE, "w"))
+    return
 
-def view_history():
-	with open(PUNCH_FILE) as fh:
-		print(json.dump(fh, indent=2))
+def view_history(view_opts):
+    data = json.load(open(PUNCH_FILE))
+    if "raw" in view_opts:
+        print("==========RAW HISTORY:==========")
+        print(json.dumps(data, indent=2))
+        print("========END RAW HISTORY:========")
+    if "human" in view_opts:
+        print("========HUMAN HISTORY:========")
+        data_2 = []
+        for d in data:
+            time_in = datetime.datetime.fromtimestamp(d["clock_in"])
+            time_out = datetime.datetime.fromtimestamp(d["clock_out"])
+            entry = {"clock_in": time_in.strftime(TIME_FORMAT), "clock_out": time_out.strftime(TIME_FORMAT)}
+            data_2.append(entry)
+        print(json.dumps(data_2, indent=2))
+        print("========END HUMAN HISTORY:========")
+    if "parsed" in view_opts:
+        print("========HUMAN HISTORY:========")
+        data_2 = []
+        for d in data:
+            time_in = datetime.datetime.fromtimestamp(d["clock_in"])
+            time_out = datetime.datetime.fromtimestamp(d["clock_out"])
+            entry = {"clock_in": time_in.strftime(TIME_FORMAT), "clock_out": time_out.strftime(TIME_FORMAT)}
+            data_2.append(entry)
+        print(json.dumps(data_2, indent=2))
+        print("========END HUMAN HISTORY:========")
+    
 
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser()
-	parser.add_args("--clock-in", "-i", help="clock in", action="store_true", default=False)
-	parser.add_args("--clock-out", "-o", help="clock out", action="store_true", default=False)
-	parser.add_args("--view", "-v", help="view history", action="store_true", default=False)
-	args = parser.parse_args()
+    if not os.path.exists(PUNCH_FILE):
+        with open(PUNCH_FILE, "w") as fh:
+            fh.write("[]")
+    if not os.path.isfile(PUNCH_FILE):
+        print("ERROR: Save file not found.")
+        sys.exit(-1)
 
-	if args.clock_in and args.clock_out:
-		print("ERROR: Cannot clock both in and out")
-		sys.exit(-1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--clock-in", "-i", help="clock in", action="store_true", default=False)
+    parser.add_argument("--clock-out", "-o", help="clock out", action="store_true", default=False)
+    parser.add_argument("--view", "-v", required=False, help="View history", type=str, nargs="*", default=[], choices=["raw", "human", "processed", "total_hours", 
+        "summary"])
+    args = parser.parse_args()
 
-	if not args.view:
-		record_action(args)
-	else:
-		view_history()
-	sys.exit(0)
+    if args.clock_in and args.clock_out:
+        print("ERROR: Cannot clock both in and out")
+        sys.exit(-1)
+
+    if args.clock_in or args.clock_out:
+        record_action(args)
+    else:
+        view_history(args.view)
+    sys.exit(0)
