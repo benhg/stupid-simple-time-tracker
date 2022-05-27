@@ -15,7 +15,8 @@ Schema:
 [
   {
     "clock_in" : TIMESTAMP,
-    "clock_out": TIMESTAMP
+    "clock_out": TIMESTAMP,
+    "notes": "Optional String"
   },
   {
     "clock_in" : TIMESTAMP,
@@ -49,6 +50,8 @@ def record_action(args):
     else:
         print("ERROR: Unexpected command")
         sys.exit(-1)
+    if (args.notes):    
+        current_log["notes"] = args.notes
 
     json.dump(current_log, open(PUNCH_FILE, "w"))
     return
@@ -134,6 +137,12 @@ if __name__ == '__main__':
                             "raw", "human", "parsed", "total_time", "summary",
                             "summary_week"
                         ])
+    parser.add_argument("--notes",
+                        "-n",
+                        required=False,
+                        help="Add notes to a punch in or out",
+                        type=str,,
+                        default="")
     args = parser.parse_args()
 
     if not os.path.exists(PUNCH_FILE) or args.reset:
