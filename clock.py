@@ -57,7 +57,7 @@ def record_action(args):
 def readable_delta(time_in, time_out):
     attrs = ['years', 'months', 'days', 'hours', 'minutes', 'seconds']
     delta = relativedelta(time_out, time_in)
-    return ['%d %s' % (getattr(delta, attr), attr if getattr(delta, attr) > 1 else attr[:-1])]
+    return ['%d %s' % (getattr(delta, attr), attr if getattr(delta, attr) > 1 else attr[:-1]) for attr in attrs if getattr(delta, attr)]
 
 def view_history(view_opts):
     data = json.load(open(PUNCH_FILE))
@@ -76,15 +76,21 @@ def view_history(view_opts):
         print(json.dumps(data_2, indent=2))
         print("========END HUMAN HISTORY:========")
     if "parsed" in view_opts:
-        print("========HUMAN HISTORY:========")
+        print("========PARSED HISTORY:========")
         data_2 = []
         for d in data:
             time_in = datetime.datetime.fromtimestamp(d["clock_in"])
             time_out = datetime.datetime.fromtimestamp(d["clock_out"])
-            entry = {"clock_in": time_in.strftime(TIME_FORMAT), "clock_out": time_out.strftime(TIME_FORMAT), "total_time": readable_delta(time_in, time_out) }
+            entry = {"clock_in": time_in.strftime(TIME_FORMAT), "clock_out": time_out.strftime(TIME_FORMAT), "total_time": " ".join(readable_delta(time_in, time_out)) }
             data_2.append(entry)
         print(json.dumps(data_2, indent=2))
-        print("========END HUMAN HISTORY:========")
+        print("========PARSED HUMAN HISTORY:========")
+    if "total_time" in view_opts:
+        print("Show the total amount of time in hours")
+    if "summary" in view_opts:
+        print("Show the time broken down per day")
+    if "summary_week" in view_opts:
+        print("Show the time broken down per week")
     
 
 
@@ -99,8 +105,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--clock-in", "-i", help="clock in", action="store_true", default=False)
     parser.add_argument("--clock-out", "-o", help="clock out", action="store_true", default=False)
-    parser.add_argument("--view", "-v", required=False, help="View history", type=str, nargs="*", default=[], choices=["raw", "human", "processed", "total_hours", 
-        "summary"])
+    parser.add_argument("--view", "-v", required=False, help="View history", type=str, nargs="*", default=[], choices=["raw", "human", "parsed", "total_time", 
+        "summary", "summary_week"])
     args = parser.parse_args()
 
     if args.clock_in and args.clock_out:
