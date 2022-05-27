@@ -6,6 +6,7 @@ import sys
 import datetime
 import time
 import os
+from dateutil.relativedelta import relativedelta
 
 PUNCH_FILE = "/Users/ben/clock_log.json"
 TIME_FORMAT = "%m/%d/%Y, %H:%M:%S"
@@ -53,6 +54,11 @@ def record_action(args):
     json.dump(current_log, open(PUNCH_FILE, "w"))
     return
 
+def readable_delta(time_in, time_out):
+    attrs = ['years', 'months', 'days', 'hours', 'minutes', 'seconds']
+    delta = relativedelta(time_out, time_in)
+    return ['%d %s' % (getattr(delta, attr), attr if getattr(delta, attr) > 1 else attr[:-1])]
+
 def view_history(view_opts):
     data = json.load(open(PUNCH_FILE))
     if "raw" in view_opts:
@@ -75,7 +81,7 @@ def view_history(view_opts):
         for d in data:
             time_in = datetime.datetime.fromtimestamp(d["clock_in"])
             time_out = datetime.datetime.fromtimestamp(d["clock_out"])
-            entry = {"clock_in": time_in.strftime(TIME_FORMAT), "clock_out": time_out.strftime(TIME_FORMAT)}
+            entry = {"clock_in": time_in.strftime(TIME_FORMAT), "clock_out": time_out.strftime(TIME_FORMAT), "total_time": readable_delta(time_in, time_out) }
             data_2.append(entry)
         print(json.dumps(data_2, indent=2))
         print("========END HUMAN HISTORY:========")
