@@ -84,7 +84,7 @@ def view_history(view_opts):
             entry = {"clock_in": time_in.strftime(TIME_FORMAT), "clock_out": time_out.strftime(TIME_FORMAT), "total_time": " ".join(readable_delta(time_in, time_out)) }
             data_2.append(entry)
         print(json.dumps(data_2, indent=2))
-        print("========PARSED HUMAN HISTORY:========")
+        print("========END PARSED HISTORY:========")
     if "total_time" in view_opts:
         print("Show the total amount of time in hours")
     if "summary" in view_opts:
@@ -95,19 +95,22 @@ def view_history(view_opts):
 
 
 if __name__ == '__main__':
-    if not os.path.exists(PUNCH_FILE):
+
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--clock-in", "-i", help="clock in", action="store_true", default=False)
+    parser.add_argument("--clock-out", "-o", help="clock out", action="store_true", default=False)
+    parser.add_argument("--reset", "-r", help="erase history", action="store_true", default=False)
+    parser.add_argument("--view", "-v", required=False, help="View history", type=str, nargs="+", default=[], choices=["raw", "human", "parsed", "total_time", 
+        "summary", "summary_week"])
+    args = parser.parse_args()
+
+    if not os.path.exists(PUNCH_FILE) or args.reset:
         with open(PUNCH_FILE, "w") as fh:
             fh.write("[]")
     if not os.path.isfile(PUNCH_FILE):
         print("ERROR: Save file not found.")
         sys.exit(-1)
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--clock-in", "-i", help="clock in", action="store_true", default=False)
-    parser.add_argument("--clock-out", "-o", help="clock out", action="store_true", default=False)
-    parser.add_argument("--view", "-v", required=False, help="View history", type=str, nargs="*", default=[], choices=["raw", "human", "parsed", "total_time", 
-        "summary", "summary_week"])
-    args = parser.parse_args()
 
     if args.clock_in and args.clock_out:
         print("ERROR: Cannot clock both in and out")
