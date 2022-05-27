@@ -36,7 +36,7 @@ def record_action(args):
     current_log = json.load(open(PUNCH_FILE))
     current_log = sorted(current_log, key=lambda x: x.get("clock_in", -1))
     if args.clock_in:
-        if current_log[-1]["clock_out"] == -1:
+        if (len(current_log) > 0) and (current_log[-1]["clock_out"] == -1):
             print("ERROR: Currently clocked in.")
             sys.exit(-1)
         # Create new entry with -1 as clock out time
